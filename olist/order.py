@@ -12,15 +12,58 @@ class Order:
     def __init__(self):
         # Assign an attribute ".data" to all new instances of Order
         self.data = Olist().get_data()
-
+    
     def get_wait_time(self, is_delivered=True):
         """
         Returns a DataFrame with:
         [order_id, wait_time, expected_wait_time, delay_vs_expected, order_status]
         and filters out non-delivered orders unless specified
         """
-        # Hint: Within this instance method, you have access to the instance of the class Order in the variable self, as well as all its attributes
-        pass  # YOUR CODE HERE
+
+        orders = self.data["orders"].copy()
+
+        if is_delivered:
+            orders = orders[orders["order_status"] == "delivered"]
+
+        orders["order_purchase_timestamp"] = pd.to_datetime(
+            orders["order_purchase_timestamp"]
+        )
+        orders["order_delivered_customer_date"] = pd.to_datetime(
+            orders["order_delivered_customer_date"]
+        )
+        orders["order_estimated_delivery_date"] = pd.to_datetime(
+            orders["order_estimated_delivery_date"]
+        )
+
+        orders["wait_time"] = (
+            orders["order_delivered_customer_date"]
+            - orders["order_purchase_timestamp"]
+        ).dt.days
+
+        orders["expected_wait_time"] = (
+            orders["order_estimated_delivery_date"]
+            - orders["order_purchase_timestamp"]
+        ).dt.days
+
+        orders["delay_vs_expected"] = (
+            orders["wait_time"] - orders["expected_wait_time"]
+        ).clip(lower=0)
+
+        result = orders[
+            [
+                "order_id",
+                "wait_time",
+                "expected_wait_time",
+                "delay_vs_expected",
+                "order_status",
+            ]
+        ]
+
+        return result
+
+
+        
+
 
     def get_review_score(self):
         """
